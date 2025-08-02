@@ -46,12 +46,15 @@ def execute_backtesting(df_back):
         fee = 0
         position_size = 1  # full capital per trade
 
-        for i, row in df_back.iterrows():
+        for idx in range(len(df_back) - 1):
+            row = df_back.iloc[idx]
+            next_row = df_back.iloc[idx + 1]
+
             predicted = row["PredictedHigh"]
             predicted_change = row['PredictedHighChange']
             actual = row["High"]
             open_price = row["Open"]
-            close_price = row["Close"]
+            next_open_price = next_row["Open"]
             movement_fees = 0
 
             # Only trade if the prediction is good enough
@@ -76,7 +79,7 @@ def execute_backtesting(df_back):
                 movement_fees += fee
             else:
                 # conservative fallback: flat return, small loss from fees
-                sell_income = close_price * stock_amount
+                sell_income = next_open_price * stock_amount
                 movement_fees += fee
 
             pnl = sell_income - buy_outcome - movement_fees
@@ -119,12 +122,15 @@ def simple_backtesting(df_back, quantile):
     fee = 0
     position_size = 1  # full capital per trade
 
-    for i, row in df_back.iterrows():
+    for idx in range(len(df_back) - 1):
+        row = df_back.iloc[idx]
+        next_row = df_back.iloc[idx + 1]
+
         predicted = row["PredictedHigh"]
         predicted_change = row['PredictedHighChange']
         actual = row["High"]
         open_price = row["Open"]
-        close_price = row["Close"]
+        next_open_price = next_row["Open"]
         movement_fees = 0
 
         # Only trade if the prediction is good enough
@@ -149,7 +155,7 @@ def simple_backtesting(df_back, quantile):
             movement_fees += fee
         else:
             # conservative fallback: flat return, small loss from fees
-            sell_income = close_price * stock_amount
+            sell_income = next_open_price * stock_amount
             movement_fees += fee
 
         pnl = sell_income - buy_outcome - movement_fees

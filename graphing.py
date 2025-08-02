@@ -39,7 +39,7 @@ def plot_training_history(history, ticker):
 
 def plot_balance(df_back, balance, ticker):
     plt.figure(figsize=(12, 6))  # Optional: make it more readable
-    plt.plot(df_back['Date'], balance[1:])
+    plt.plot(df_back['Date'], balance[:])
     plt.title("Equity Curve")
     plt.xlabel("Date")
     plt.ylabel("Balance")
