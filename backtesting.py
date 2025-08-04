@@ -33,7 +33,7 @@ def get_prepare_data(ticker:str, intervals: List[str], SEQ_LEN: int, scaler: Sta
 
 def execute_backtesting(df_back):
     results = []
-    best_info = {'performance': float('-inf'), 'balance':[], 'quantile': 0}
+    best_info = {'performance': float('-inf'), 'balance':[], 'quantile': 0, 'weighted_return': float('-inf')}
 
     for q in range(0, 100):
         initial_cash = 1000
@@ -41,6 +41,7 @@ def execute_backtesting(df_back):
         hits = 0
         trades = 0
         no_trade_days = 0
+        returns_sum = 0
 
         threshold = df_back['PredictedHighChange'].quantile(q / 100)
         fee = 0
@@ -83,21 +84,33 @@ def execute_backtesting(df_back):
                 movement_fees += fee
 
             pnl = sell_income - buy_outcome - movement_fees
+            returns_sum += (100 * pnl) / balance[-1]
 
             balance.append(balance[-1] + pnl)
 
+        profit_factor = get_profit_factor(balance)
+        final_return = (((balance[-1] * 100) / initial_cash) - 100)
+        weighted_return = final_return * (profit_factor-1)
+        hit_rate = hits/trades
+        average_pnl_per_trade = returns_sum / trades
         results.append(
-            {'return': (((balance[-1] * 100) / initial_cash) - 100),
+            {'return': final_return,
              'trades': trades,
              'no_trades': no_trade_days,
-             'hit_rate': hits / trades})
-        performance = (((balance[-1] * 100) / initial_cash) - 100) / 100
-        if performance > best_info['performance']:
+             'hit_rate': hit_rate,
+             'profit_factor': profit_factor,
+             'weighted_return': weighted_return,
+             'average_pnl%_per_trade': average_pnl_per_trade,})
+        performance = final_return / 100
+        if weighted_return > best_info['weighted_return']:
             best_info['performance'] = performance
+            best_info['weighted_return'] = weighted_return
             best_info['quantile'] = q / 100
+            best_info['average_pnl%_per_trade']  = average_pnl_per_trade
             best_info['trades'] = trades
             best_info['no_trades'] = no_trade_days
             best_info['hit'] = hits
+            best_info['hit_rate'] = hit_rate
             best_info['threshold'] = df_back['PredictedHighChange'].quantile(best_info['quantile'])
             best_info['balance'] = balance
 
@@ -110,13 +123,14 @@ def execute_backtesting(df_back):
 
 def simple_backtesting(df_back, quantile):
     results = []
-    best_info = {'performance': 0.0, 'balance': [], 'quantile': 0}
+    best_info = {'performance': float('inf'), 'balance': [], 'quantile': 0, 'weighted_return': float('-inf')}
 
     initial_cash = 1000
     balance = [initial_cash]
     hits = 0
     trades = 0
     no_trade_days = 0
+    returns_sum = 0
 
     threshold = df_back['PredictedHighChange'].quantile(quantile)
     fee = 0
@@ -159,21 +173,33 @@ def simple_backtesting(df_back, quantile):
             movement_fees += fee
 
         pnl = sell_income - buy_outcome - movement_fees
+        returns_sum += (100 * pnl) / balance[-1]
 
         balance.append(balance[-1] + pnl)
 
+    profit_factor = get_profit_factor(balance)
+    final_return = (((balance[-1] * 100) / initial_cash) - 100)
+    weighted_return = final_return * (profit_factor-1)
+    hit_rate = hits / trades
+    average_pnl_per_trade = returns_sum / trades
     results.append(
-        {'return': (((balance[-1] * 100) / initial_cash) - 100),
+        {'return': final_return,
          'trades': trades,
          'no_trades': no_trade_days,
-         'hit_rate': hits / trades})
-    performance = (((balance[-1] * 100) / initial_cash) - 100) / 100
+         'hit_rate': hit_rate,
+         'profit_factor': profit_factor,
+         'weighted_return': weighted_return,
+         'average_pnl%_per_trade': average_pnl_per_trade,})
+    performance = final_return / 100
 
+    best_info['average_pnl%_per_trade'] = average_pnl_per_trade
     best_info['performance'] = performance
+    best_info['weighted_return'] = weighted_return
     best_info['quantile'] = quantile
     best_info['trades'] = trades
     best_info['no_trades'] = no_trade_days
     best_info['hit'] = hits
+    best_info['hit_rate'] = hit_rate
     best_info['threshold'] = df_back['PredictedHighChange'].quantile(best_info['quantile'])
     best_info['balance'] = balance
 
@@ -259,7 +285,6 @@ def complete_backtest(ticker, intervals, SEQ_LEN, scaler, model, quantile=None):
 
     back_info['max_drawdown'] = get_max_drawdown(back_info['balance'])
     back_info['profit_factor'] = get_profit_factor(back_info['balance'])
-    back_info['average_gain'] = get_average_gain(back_info['balance'], back_info['trades'])
 
     plot_balance(df_back, back_info['balance'], ticker)
 
