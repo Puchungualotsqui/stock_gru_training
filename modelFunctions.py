@@ -5,6 +5,7 @@ from tensorflow.keras import layers, models, Input
 from tensorflow.keras.callbacks import EarlyStopping
 from graphing import *
 from sklearn.metrics import mean_absolute_error
+from sklearn.utils import shuffle
 
 
 def create_sequences(X, y, seq_len: int =90):
@@ -24,6 +25,8 @@ def divide_data(df_scaled: pd.DataFrame, SEQ_LEN: int):
     y_raw = df_scaled["Result"].values
 
     X_seq, y_seq = create_sequences(X_raw, y_raw, seq_len=SEQ_LEN)
+
+    X_seq, y_seq = shuffle(X_seq, y_seq, random_state=231)
 
     # Train/test split (keep time order)
     split_idx = int(len(X_seq) * 0.8)

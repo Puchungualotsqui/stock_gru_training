@@ -24,7 +24,7 @@ if __name__ == '__main__':
     scaler = joblib.load(scaler_path)
     df_scaled = scale_data(df, scaler)
 
-    SEQ_LEN = 90
+    SEQ_LEN = 200
     X_train, X_test, y_train, y_test = divide_data(df_scaled, SEQ_LEN=SEQ_LEN)
 
     @tf.keras.utils.register_keras_serializable()
