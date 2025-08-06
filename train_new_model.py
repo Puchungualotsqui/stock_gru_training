@@ -22,7 +22,9 @@ if __name__ == '__main__':
     # Train the GRU model
     SEQ_LEN = 90
 
-    X_train, X_test, y_train, y_test = divide_data(df_scaled, SEQ_LEN=SEQ_LEN)
+    X_train, X_test, y_train, y_test = divide_data(df_scaled, SEQ_LEN=SEQ_LEN, train_part=0.9)
+    print("X_train", X_train.shape)
+    print("X_test", X_test.shape)
     model, history = train_model(X_train, X_test, y_train, y_test, SEQ_LEN=SEQ_LEN, ticker=ticker)
 
     # Backtesting

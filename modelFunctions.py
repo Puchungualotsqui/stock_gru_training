@@ -1,5 +1,10 @@
 import numpy as np
 import pandas as pd
+import os
+import logging
+# Suppress TensorFlow logs
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+logging.getLogger('tensorflow').setLevel(logging.ERROR)
 import tensorflow as tf
 from tensorflow.keras import layers, models, Input
 from tensorflow.keras.callbacks import EarlyStopping
@@ -18,7 +23,7 @@ def create_sequences(X, y, seq_len: int =90):
 def mish(x):
     return x * tf.math.tanh(tf.math.softplus(x))
 
-def divide_data(df_scaled: pd.DataFrame, SEQ_LEN: int):
+def divide_data(df_scaled: pd.DataFrame, SEQ_LEN: int, train_part: float = 0.8):
     # Use your already scaled df_scaled (features only)
     feature_cols = [c for c in df_scaled.columns if c != "Result"]
     X_raw = df_scaled[feature_cols].values
@@ -26,10 +31,10 @@ def divide_data(df_scaled: pd.DataFrame, SEQ_LEN: int):
 
     X_seq, y_seq = create_sequences(X_raw, y_raw, seq_len=SEQ_LEN)
 
-    X_seq, y_seq = shuffle(X_seq, y_seq, random_state=231)
+    X_seq, y_seq = shuffle(X_seq, y_seq, random_state=9073)
 
     # Train/test split (keep time order)
-    split_idx = int(len(X_seq) * 0.8)
+    split_idx = int(len(X_seq) * train_part)
     X_train, X_test = X_seq[:split_idx], X_seq[split_idx:]
     y_train, y_test = y_seq[:split_idx], y_seq[split_idx:]
     return X_train, X_test, y_train, y_test
@@ -52,6 +57,8 @@ def train_model(X_train, X_test, y_train, y_test, SEQ_LEN: int, ticker):
     # GRU Model for regression
     model = models.Sequential([
         Input(shape=(SEQ_LEN, X_train.shape[2])),
+        layers.GRU(256, return_sequences=True, dropout=0.2, recurrent_dropout=0.1),
+        layers.LayerNormalization(),
         layers.GRU(128, return_sequences=True, dropout=0.2, recurrent_dropout=0.1),
         layers.LayerNormalization(),
         layers.GRU(64, return_sequences=True, dropout=0.2, recurrent_dropout=0.1),
@@ -83,7 +90,7 @@ def train_model(X_train, X_test, y_train, y_test, SEQ_LEN: int, ticker):
 
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=0.0005),
-        loss=ConservativeLoss(alpha=7.5),
+        loss=ConservativeLoss(alpha=5),
         metrics=['mae']
     )
 
