@@ -54,7 +54,7 @@ def plot_balance(df_back, balance, ticker):
     plt.close()
 
 def plot_metrics(results, ticker):
-    metrics = ['return', 'trades', 'no_trades', 'hit_rate', 'profit_factor', 'weighted_return']
+    metrics = ['return', 'trades', 'no_trades', 'hit_rate', 'profit_factor', 'weighted_return', 'rgs', 'average_pnl%_per_hit']
     for metric in metrics:
         to_show = []
         for r in results:

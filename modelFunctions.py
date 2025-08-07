@@ -31,7 +31,7 @@ def divide_data(df_scaled: pd.DataFrame, SEQ_LEN: int, train_part: float = 0.8):
 
     X_seq, y_seq = create_sequences(X_raw, y_raw, seq_len=SEQ_LEN)
 
-    X_seq, y_seq = shuffle(X_seq, y_seq, random_state=9073)
+    X_seq, y_seq = shuffle(X_seq, y_seq, random_state=7231)
 
     # Train/test split (keep time order)
     split_idx = int(len(X_seq) * train_part)
@@ -57,19 +57,15 @@ def train_model(X_train, X_test, y_train, y_test, SEQ_LEN: int, ticker):
     # GRU Model for regression
     model = models.Sequential([
         Input(shape=(SEQ_LEN, X_train.shape[2])),
-        layers.GRU(256, return_sequences=True, dropout=0.2, recurrent_dropout=0.1),
         layers.LayerNormalization(),
-        layers.GRU(128, return_sequences=True, dropout=0.2, recurrent_dropout=0.1),
+        layers.GRU(256, return_sequences=True, dropout=0.2),
         layers.LayerNormalization(),
-        layers.GRU(64, return_sequences=True, dropout=0.2, recurrent_dropout=0.1),
-        layers.LayerNormalization(),
-        layers.GRU(32, dropout=0.1, recurrent_dropout=0.05),
-        layers.BatchNormalization(),
-        layers.Dense(16, activation=mish),
-        layers.Dropout(0.3),
-        layers.Dense(8, activation=mish),
+        layers.GRU(128, dropout=0.2),
         layers.Dropout(0.2),
-        layers.Dense(4, activation=mish),
+        layers.Dense(64, activation=mish),
+        layers.Dropout(0.2),
+        layers.Dense(32, activation=mish),
+        layers.Dropout(0.2),
         layers.Dense(1)  # Linear output for regression
     ])
 
@@ -107,7 +103,7 @@ def train_model(X_train, X_test, y_train, y_test, SEQ_LEN: int, ticker):
     history = model.fit(
         X_train, y_train,
         validation_data=(X_test, y_test),
-        epochs=120,
+        epochs=180,
         batch_size=32,
         callbacks=[early_stop],
         verbose=1
