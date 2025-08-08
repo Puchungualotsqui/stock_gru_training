@@ -31,7 +31,7 @@ def divide_data(df_scaled: pd.DataFrame, SEQ_LEN: int, train_part: float = 0.8):
 
     X_seq, y_seq = create_sequences(X_raw, y_raw, seq_len=SEQ_LEN)
 
-    X_seq, y_seq = shuffle(X_seq, y_seq, random_state=7231)
+    X_seq, y_seq = shuffle(X_seq, y_seq, random_state=7390)
 
     # Train/test split (keep time order)
     split_idx = int(len(X_seq) * train_part)
@@ -95,7 +95,7 @@ def train_model(X_train, X_test, y_train, y_test, SEQ_LEN: int, ticker):
     # Early stopping to prevent overfitting
     early_stop = EarlyStopping(
         monitor='val_loss',
-        patience=25,
+        patience=10,
         restore_best_weights=True
     )
 
@@ -103,7 +103,7 @@ def train_model(X_train, X_test, y_train, y_test, SEQ_LEN: int, ticker):
     history = model.fit(
         X_train, y_train,
         validation_data=(X_test, y_test),
-        epochs=180,
+        epochs=120,
         batch_size=32,
         callbacks=[early_stop],
         verbose=1
