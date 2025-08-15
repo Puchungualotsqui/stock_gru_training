@@ -96,8 +96,8 @@ def execute_backtesting(df_back):
 
         profit_factor = get_profit_factor(balance)
         final_return = (((balance[-1] * 100) / initial_cash) - 100)
-        weighted_return = final_return * max((profit_factor-1), 0)
         hit_rate = hits/trades
+        weighted_return = final_return * max((profit_factor - 1), 0) * hit_rate
         average_pnl_per_trade = returns_sum / trades
         average_pnl_per_hit = hit_return_sum / hits
         rgs = returns_sum * math.log1p(max(profit_factor - 1, 0)) * math.log1p(hit_rate)
@@ -195,8 +195,8 @@ def simple_backtesting(df_back, quantile):
 
     profit_factor = get_profit_factor(balance)
     final_return = (((balance[-1] * 100) / initial_cash) - 100)
-    weighted_return = final_return * max((profit_factor-1), 0)
     hit_rate = hits / trades
+    weighted_return = final_return * max((profit_factor - 1), 0) * hit_rate
     average_pnl_per_trade = returns_sum / trades
     average_pnl_per_hit = hit_return_sum / hits
     rgs = returns_sum * math.log1p(max(profit_factor - 1, 0)) * math.log1p(hit_rate)

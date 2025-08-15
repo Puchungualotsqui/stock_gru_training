@@ -31,7 +31,7 @@ def divide_data(df_scaled: pd.DataFrame, SEQ_LEN: int, train_part: float = 0.8):
 
     X_seq, y_seq = create_sequences(X_raw, y_raw, seq_len=SEQ_LEN)
 
-    X_seq, y_seq = shuffle(X_seq, y_seq, random_state=7390)
+    X_seq, y_seq = shuffle(X_seq, y_seq, random_state=14)
 
     # Train/test split (keep time order)
     split_idx = int(len(X_seq) * train_part)
@@ -58,20 +58,20 @@ def train_model(X_train, X_test, y_train, y_test, SEQ_LEN: int, ticker):
     model = models.Sequential([
         Input(shape=(SEQ_LEN, X_train.shape[2])),
         layers.LayerNormalization(),
-        layers.GRU(256, return_sequences=True, dropout=0.2),
+        layers.GRU(64, return_sequences=True, recurrent_dropout=0.2, dropout=0.2),
         layers.LayerNormalization(),
-        layers.GRU(128, dropout=0.2),
+        layers.GRU(32, recurrent_dropout=0.1, dropout=0.2),
         layers.Dropout(0.2),
-        layers.Dense(64, activation=mish),
+        layers.Dense(16, activation=mish),
         layers.Dropout(0.2),
-        layers.Dense(32, activation=mish),
+        layers.Dense(8, activation=mish),
         layers.Dropout(0.2),
         layers.Dense(1)  # Linear output for regression
     ])
 
     @tf.keras.utils.register_keras_serializable()
     class ConservativeLoss(tf.keras.losses.Loss):
-        def __init__(self, alpha=7.5, name="conservative_loss"):
+        def __init__(self, alpha, name="conservative_loss"):
             super().__init__(name=name)
             self.alpha = alpha
 
@@ -95,7 +95,7 @@ def train_model(X_train, X_test, y_train, y_test, SEQ_LEN: int, ticker):
     # Early stopping to prevent overfitting
     early_stop = EarlyStopping(
         monitor='val_loss',
-        patience=10,
+        patience=20,
         restore_best_weights=True
     )
 
@@ -103,8 +103,8 @@ def train_model(X_train, X_test, y_train, y_test, SEQ_LEN: int, ticker):
     history = model.fit(
         X_train, y_train,
         validation_data=(X_test, y_test),
-        epochs=120,
-        batch_size=32,
+        epochs=180,
+        batch_size=16,
         callbacks=[early_stop],
         verbose=1
     )
